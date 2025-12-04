@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Absensi QR/Barcode Offline</title>
+<script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
+<style>
+    body { font-family: Arial; margin: 20px; }
+    #reader { width: 400px; margin-bottom: 20px; }
+    table { border-collapse: collapse; width: 100%; }
+    th, td { border: 1px solid #ccc; padding: 8px; text-align: center; }
+    th { background-color: #f2f2f2; }
+</style>
+</head>
+<body>
+
+<h1>Absensi QR/Barcode Offline</h1>
+
+<div id="reader"></div>
+<div id="result"></div>
+
+<h2>Dashboard Absensi</h2>
+<table id="dashboard">
+    <tr>
+        <th>No</th>
+        <th>ID Peserta</th>
+        <th>Waktu</th>
+    </tr>
+</table>
+
+<script>
+// Ambil data absensi dari LocalStorage
+let absensi = JSON.parse(localStorage.getItem('absensi')) || [];
+
+// Fungsi untuk update dashboard
+function updateDashboard() {
+    const table = document.getElementById('dashboard');
+    // hapus baris lama
+    table.innerHTML = `<tr>
+        <th>No</th>
+        <th>ID Peserta</th>
+        <th>Waktu</th>
+    </tr>`;
+    absensi.forEach((a, index) => {
+        const row = table.insertRow();
+        row.insertCell(0).textContent = index + 1;
+        row.insertCell(1).textContent = a.id;
+        row.insertCell(2).textContent = a.waktu;
+    });
+}
+
+// Scanner QR/barcode
+function onScanSuccess(decodedText, decodedResult) {
+    document.getElementById('result').innerHTML = `ID Terbaca: ${decodedText}`;
+    const waktu = new Date().toLocaleString();
+    
+    // Cek apakah ID sudah pernah absen
+    if (!absensi.find(a => a.id === decodedText)) {
+        absensi.push({id: decodedText, waktu});
+        localStorage.setItem('absensi', JSON.stringify(absensi));
+        alert('Absensi berhasil dicatat!');
+        updateDashboard();
+    } else {
+        alert('Peserta sudah absen!');
+    }
+}
+
+// Inisialisasi scanner
+let html5QrcodeScanner = new Html5QrcodeScanner(
+    "reader", { fps: 10, qrbox: 250 });
+html5QrcodeScanner.render(onScanSuccess);
+
+// Tampilkan dashboard awal
+updateDashboard();
+</script>
+
+</body>
+</html>
